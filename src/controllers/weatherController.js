@@ -1,52 +1,101 @@
 const fs = require('fs');
+const path = require('path');  // Ensure path module is required for resolving paths
 
-async function getDataFromDatabase() {
+async function getWeatherDataByName(cityName) {
   return new Promise((resolve, reject) => {
-    fs.readFile('src/data/data.json', (err, data) => {
+    fs.readFile(path.join(__dirname, '../data/data.json'), 'utf-8', (err, data) => {
       if (err) {
-        reject(err);
-      } else {
-        resolve(JSON.parse(data));
+        return reject({
+          status: 'error',
+          message: 'Failed to read data file',
+          error: err.message
+        });
+      }
+
+      try {
+        const citiesData = JSON.parse(data);
+        const cityWeather = citiesData.find(city => city.city.toLowerCase() === cityName.toLowerCase());
+
+        if (cityWeather) {
+          resolve({
+            status: 'success',
+            message: 'Weather data retrieved',
+            data: {
+              city: cityWeather.city,
+              temperature: cityWeather.weather.temperature,
+              humidity: cityWeather.weather.humidity,
+              windSpeed: cityWeather.weather.windSpeed,
+              conditions: cityWeather.weather.conditions
+            }
+          });
+        } else {
+          reject({
+            status: 'error',
+            message: 'Failed to retrieve weather data',
+            error: 'City not found'
+          });
+        }
+      } catch (parseError) {
+        reject({
+          status: 'error',
+          message: 'Failed to parse weather data',
+          error: parseError.message
+        });
       }
     });
   });
 }
 
-async function saveDataToDatabase(data) {
-  return new Promise((resolve, reject) => {
-    const jsonData = JSON.stringify(data);
-    fs.writeFile('src/data/data.json', jsonData, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-}
-
-/*
-  Instructions for students:
-  Implement the function getForecastDataByName(cityName) that retrieves the 7-day weather forecast data for a city by its name.
-
-  Tips:
-    - Use the getDataFromDatabase() function to retrieve the data from the database.
-    - Access the array of cities and their forecast data from the returned result.
-    - Find the city object with the matching name and extract its forecast data.
-    - Return the appropriate JSON response based on the result.
-
-*/
-
-
-// Level 2: Get 7 Days Weather Forecast Data by Name
+// Function to get 7-day forecast data
 async function getForecastDataByName(cityName) {
-  
+  return new Promise((resolve, reject) => {
+    fs.readFile(path.join(__dirname, '../data/data.json'), 'utf-8', (err, data) => {
+      if (err) {
+        return reject({
+          status: 'error',
+          message: 'Failed to read data file',
+          error: err.message
+        });
+      }
 
-  // TODO: Implement this function
-  
+      try {
+        const citiesData = JSON.parse(data);
+        const cityWeather = citiesData.find(city => city.city.toLowerCase() === cityName.toLowerCase());
+
+        if (cityWeather) {
+          // Assuming `forecast` is a list of 7 days forecast data in the `cityWeather` object
+          resolve({
+            status: 'success',
+            message: 'Forecast data retrieved',
+            data: {
+              day1: cityWeather.forecast[0],
+              day2: cityWeather.forecast[1],
+              day3: cityWeather.forecast[2],
+              day4: cityWeather.forecast[3],
+              day5: cityWeather.forecast[4],
+              day6: cityWeather.forecast[5],
+              day7: cityWeather.forecast[6]
+            }
+          });
+        } else {
+          reject({
+            status: 'error',
+            message: 'Failed to retrieve forecast data',
+            error: 'City not found'
+          });
+        }
+      } catch (parseError) {
+        reject({
+          status: 'error',
+          message: 'Failed to parse forecast data',
+          error: parseError.message
+        });
+      }
+    });
+  });
 }
-
 
 module.exports = {
+  getWeatherDataByName,
   getForecastDataByName
 };
